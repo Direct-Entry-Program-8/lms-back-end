@@ -42,6 +42,10 @@ public class StudentDTO implements Serializable {
 
     @Override
     public String toString() {
-        return super.toString();
+        return "StudentDTO{" +
+                "name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", nic='" + nic + '\'' +
+                '}';
     }
 }

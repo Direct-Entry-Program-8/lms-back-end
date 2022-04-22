@@ -1,17 +1,16 @@
 package lk.ijse.dep8.lms.api;
 
-import jakarta.json.*;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
-import lk.ijse.dep8.lms.util.Customer;
+import jakarta.json.bind.JsonbException;
+import lk.ijse.dep8.lms.dto.StudentDTO;
+import lk.ijse.dep8.lms.exception.ValidationException;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
-import java.io.BufferedReader;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
 
 public class StudentServlet extends HttpServlet {
 
@@ -25,39 +24,29 @@ public class StudentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (req.getContentType() == null ||
-                !req.getContentType().toLowerCase().startsWith("application/json")){
+                !req.getContentType().toLowerCase().startsWith("application/json")) {
             resp.sendError(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE);
             return;
         }
 
-//        List<Customer> customerList = new ArrayList<>();
-
-//        JsonReader jsonReader = Json.createReader(req.getReader());
-//        JsonArray jsonArray = jsonReader.readArray();
-//        for (int i = 0; i < jsonArray.size(); i++) {
-//            JsonObject jsonObject = jsonArray.getJsonObject(i);
-//            String id = jsonObject.getString("id");
-//            String name = jsonObject.getString("name");
-//            String address = jsonObject.getString("address");
-//            customerList.add(new Customer(id, name, address));
-//        }
-
         Jsonb jsonb = JsonbBuilder.create();
-        List<Customer> customerList = jsonb.fromJson(req.getReader(),
-                new ArrayList<Customer>(){}.getClass().getGenericSuperclass());
+        try {
+            StudentDTO student = jsonb.fromJson(req.getReader(), StudentDTO.class);
 
-        customerList.forEach(System.out::println);
+            if (student.getName() == null || !student.getName().matches("[A-Za-z ]+")){
+                throw new ValidationException("Invalid student name");
+            }else if (student.getNic() == null || !student.getNic().matches("\\d{9}[Vv]")){
+                throw new ValidationException("Invalid student nic");
+            }else if (student.getEmail() == null || !student.getEmail().matches("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])")){
+                throw new ValidationException("Invalid student email");
+            }
 
-        List<Customer> anotherCustomerList = new ArrayList<>();
-        anotherCustomerList.add(new Customer("C001", "Nuwan", "Galle"));
-        anotherCustomerList.add(new Customer("C001", "Nuwan", "Galle"));
-        anotherCustomerList.add(new Customer("C001", "Nuwan", "Galle"));
-        anotherCustomerList.add(new Customer("C001", "Nuwan", "Galle"));
-        anotherCustomerList.add(new Customer("C001", "Nuwan", "Galle"));
-
-        resp.setContentType("application/json");
-        jsonb.toJson(anotherCustomerList, resp.getWriter());
-
+            System.out.println(student);
+        }catch (JsonbException e){
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON");
+        }catch (ValidationException e){
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+        }
     }
 
     @Override
