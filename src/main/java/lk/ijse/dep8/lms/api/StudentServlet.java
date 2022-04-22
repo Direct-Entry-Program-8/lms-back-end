@@ -14,9 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class StudentServlet extends HttpServlet {
 
@@ -60,14 +58,21 @@ public class StudentServlet extends HttpServlet {
             }
 
             try(Connection connection = pool.getConnection()){
-                PreparedStatement stm = connection.prepareStatement("INSERT INTO student (name, nic, email) VALUES (?,?,?)");
+                PreparedStatement stm = connection.
+                        prepareStatement("INSERT INTO student (name, nic, email) VALUES (?,?,?)", Statement.RETURN_GENERATED_KEYS);
                 stm.setString(1, student.getName());
                 stm.setString(2, student.getNic());
                 stm.setString(3, student.getEmail());
                 if (stm.executeUpdate() != 1){
                     throw new RuntimeException("Failed to save the student");
                 }
+                ResultSet rst = stm.getGeneratedKeys();
+                rst.next();
+                student.setId(rst.getString(1));
+
                 resp.setStatus(HttpServletResponse.SC_CREATED);
+                resp.setContentType("application/json");
+                jsonb.toJson(student, resp.getWriter());
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
