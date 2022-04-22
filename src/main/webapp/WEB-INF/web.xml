@@ -8,4 +8,9 @@
         <resource-env-ref-name>jdbc/pool4lms</resource-env-ref-name>
     </resource-env-ref>
 
+    <context-param>
+        <param-name>origin</param-name>
+        <param-value>localhost</param-value>
+    </context-param>
+
 </web-app>
