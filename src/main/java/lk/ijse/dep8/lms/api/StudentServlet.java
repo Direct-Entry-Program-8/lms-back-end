@@ -14,6 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class StudentServlet extends HttpServlet {
 
@@ -56,11 +59,25 @@ public class StudentServlet extends HttpServlet {
                 throw new ValidationException("Invalid student email");
             }
 
-            System.out.println(student);
+            try(Connection connection = pool.getConnection()){
+                PreparedStatement stm = connection.prepareStatement("INSERT INTO student (name, nic, email) VALUES (?,?,?)");
+                stm.setString(1, student.getName());
+                stm.setString(2, student.getNic());
+                stm.setString(3, student.getEmail());
+                if (stm.executeUpdate() != 1){
+                    throw new RuntimeException("Failed to save the student");
+                }
+                resp.setStatus(HttpServletResponse.SC_CREATED);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }catch (JsonbException e){
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON");
         }catch (ValidationException e){
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+        }catch (Throwable t){
+            t.printStackTrace();
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
         }
     }
 
