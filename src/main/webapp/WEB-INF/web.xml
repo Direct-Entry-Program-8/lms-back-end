@@ -11,6 +11,7 @@
     <servlet>
         <servlet-name>StudentServlet</servlet-name>
         <servlet-class>lk.ijse.dep8.lms.api.StudentServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet-mapping>
